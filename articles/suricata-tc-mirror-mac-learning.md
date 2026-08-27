@@ -3,7 +3,7 @@ title: "tcミラーでSuricataにパケットが流れない ― Linuxブリッ�
 emoji: "🪞"
 type: "tech"
 topics: ["suricata", "proxmox", "linux", "network", "ids"]
-published: false
+published: true
 ---
 
 ## TL;DR
