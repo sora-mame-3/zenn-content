@@ -3,7 +3,7 @@ title: "Proxmox VMのフリーズをi6300esbウォッチドッグで自動復旧
 emoji: "🐕"
 type: "tech"
 topics: ["proxmox", "linux", "qemu", "systemd", "watchdog"]
-published: false
+published: true
 ---
 
 ## TL;DR
