@@ -56,7 +56,7 @@ DVWA（Damn Vulnerable Web App）は学習用にわざと脆弱に作られた�
 
    > IMPORTANT: the payload must be syntactically valid and functionally correct ... do not insert placeholder notation like literal U+ codes or descriptive text, only real characters and real working syntax.
 
-   ここは何度も痛い目を見た。小さいモデルは平気で `<script>alert(String.fromCharCode(...))</script>` の "..." を文字列のまま出したり、`U+0027` みたいな説明表記を混ぜてくる。プロンプトで強めに釘を刺してもたまにやる。LLM がコケたら手法ごとの固定ペイロード（`FALLBACK_PAYLOADS`）に落とす。
+   ここは何度も痛い目を見た。小さいモデルは平気で、ペイロード中の可変部を `...`（三点リーダ）のまま文字列として出力したり、シングルクォートを `U+0027` のようなコードポイント表記で書いてきたりする。プロンプトで強めに釘を刺してもたまにやる。LLM がコケたら手法ごとの固定ペイロード（`FALLBACK_PAYLOADS`）に落とす。
 
 4. **撃つ**（`do_generic`）。手法ごとに DVWA の正しいエンドポイントとパラメータへ HTTP。`X-Attack-Technique` ヘッダを付けて審判が集計できるようにする。
 5. **結果を見る**
@@ -75,15 +75,15 @@ DVWA は毎回 `user_token` を吐くので、ログインは「GET でトーク
 
 DVWA の前段に立つ Flask 製リバースプロキシ。ここは AI ではなくルールベース：
 
-- 正規表現でリクエストを分類（`union select`、`or 1=1`、`<script`、`; whoami`、`../` …）。
+- 正規表現でリクエストを分類する。SQL 注入の常套句（UNION 結合、常真条件、コメント切り詰め、時間ベースの遅延関数）、スクリプトタグやイベントハンドラ属性、シェルのコマンド区切り文字、相対パスのトラバーサル記号などをパターンにしている。
 - `blocklist`（IP 単位）と `blocked_paths`（パスプレフィックス単位・時限）を持ち、該当したら即 `403`。
 - ターゲットへ転送し、**レスポンスを見て「攻撃が成功したか」を推定**する。これが審判のスコアの入力になる：
-  - SQLi: SQL エラー文字列が無いのに `First name` が複数回出てくる（UNION 成功）
+  - SQLi: SQL エラー文が無いのに、DVWA のユーザー一覧テーブルの見出し文字列が複数回出てくる（UNION 成功）
   - XSS: 送ったペイロード文字列がレスポンスにそのまま反射している
-  - cmdi: `uid=` や `root:x:` や `PING ` が出た
-  - LFI: `root:x:0:0` や長い base64 が出た
-  - CSRF: "Password Changed"
-  - ファイルアップロード: "successfully uploaded"
+  - cmdi: コマンド実行結果らしき出力（`id` の結果、`ping` の出力など）が混ざる
+  - LFI: `/etc/passwd` の中身らしき行や、長い base64 が出る
+  - CSRF: パスワード変更完了メッセージ
+  - ファイルアップロード: アップロード成功メッセージ
 - 判定結果を `X-Exploit-Success: true/false` でヘッダに乗せて攻撃 AI にも返す（攻撃 AI 側の学習材料になる）。
 - `/_defender/*` という管理 API を生やしてある（`block` / `unblock` / `block_path` / `recent`）。
 
