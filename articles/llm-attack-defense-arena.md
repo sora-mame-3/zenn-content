@@ -3,7 +3,7 @@ title: "ローカルLLM同士でWeb攻防アリーナを作った ― 攻撃AI v
 emoji: "⚔️"
 type: "tech"
 topics: ["llm", "security", "ollama", "dvwa", "python"]
-published: false
+published: true
 ---
 
 ## TL;DR
